@@ -25,8 +25,7 @@ from shapely.ops import unary_union
 from scipy.spatial import distance_matrix
 from pypxml import PageXML, PageType
 from rich import print as rprint
-from rich.progress import (Progress, TextColumn, BarColumn, MofNCompleteColumn, TimeRemainingColumn,
-                           TimeElapsedColumn, SpinnerColumn)
+from rich.progress import Progress, TextColumn, BarColumn, MofNCompleteColumn, TimeRemainingColumn, TimeElapsedColumn
 
 
 # Config
