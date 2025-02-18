@@ -39,11 +39,11 @@ click.rich_click.OPTION_GROUPS = {
     "*": [
         {
             "name": "Input",
-            "options": ["--regions", "--lines", "--rglob", "--lglob"]
+            "options": ["xmls", "--glob", "--image-suffix"]
         },
         {
             "name": "Options",
-            "options": ["--output", "--mode"]
+            "options": ["--output", "--padding", "--vertical", "--horizontal", "--mode"]
         },
         {
             "name": "Help",
@@ -77,6 +77,7 @@ def path_callback(ctx, param, value: str) -> Optional[Path]:
 def suffix_callback(ctx, param, value: Optional[str]) -> str:
     """Parses a string to a valid suffix."""
     return None if value is None else (value if value.startswith('.') else f".{value}")
+
 
 # Utils
 def expand_paths(paths: Union[Path, list[Path]], glob: str = '*') -> list[Path]:
@@ -126,13 +127,6 @@ class Pageshrink:
     def __init__(self, xml: Path, image: Path):
         self.xml = xml
         self.image = image
-
-    @staticmethod
-    def log(message: str, logger: Optional[Progress] = None):
-        if logger:
-            logger.log(message)
-        else:
-            rprint(message)
 
     def shrink(self, p: int = 5, h: int = 1, v: int = 1, mode: SHRINK_MODE = "merge",
                whitelist: Optional[list[PageType]] = None, logger: Optional[Progress] = None) -> PageXML:
@@ -213,6 +207,13 @@ class Pageshrink:
                     self.log(f"Could not shrink region {region.id} ({self.xml})", logger)
         return pxml
 
+    @staticmethod
+    def log(message: str, logger: Optional[Progress] = None):
+        if logger:
+            logger.log(message)
+        else:
+            rprint(message)
+            
     @staticmethod
     def is_bitonal(image: np.ndarray) -> bool:
         """
@@ -350,9 +351,68 @@ class Pageshrink:
                       prog_name=__prog__,
                       message=f"{__prog__} v{__version__} - Developed at Centre for Philology and Digitality (ZPD), "
                               f"University of Würzburg")
-def pageshrink_cli(**kwargs):
-    pass
-
+@click.argument("xmls",
+                type=click.Path(exists=True, file_okay=True, dir_okay=True, resolve_path=True),
+                callback=paths_callback, required=True, nargs=-1)
+@click.option("-g", "--glob", "glob",
+              help="Glob pattern for matching PageXML files within directories. "
+                   "Only applicable when directories are passed in XMLS.",
+              type=click.STRING,
+              default="*.xml", required=False, show_default=True)
+@click.option("-i", "--image-suffix", "image_suffix",
+              help="Suffix of the image files to search for. "
+                   "If not provided, the image filename from the PageXML is used.",
+              type=click.STRING, callback=suffix_callback, required=False, show_default=True)
+@click.option("-o", "--output", "output",
+              help="Specify output directory for shrunk files. If not set, overwrite input files.",
+              type=click.Path(exists=False, dir_okay=True, file_okay=False, resolve_path=True),
+              callback=path_callback, required=False)
+@click.option("-p", "--padding", "padding",
+              help="Padding between region borders and its content in pixels.",
+              type=click.INT, default=5, show_default=5)
+@click.option("-v", "--vertical", "vertical", 
+              help="Vertical smoothing factor as a multiple of the average glyph height.",
+              type=click.INT, default=1, show_default=True)
+@click.option("-h", "--horizontal", "horizontal",
+              help="Horizontal smoothing factor as a multiple of the average glyph width.",
+              type=click.INT, default=1, show_default=True)
+@click.option("-m", "--mode", "mode",
+              help="Shrinking mode to use for regions. "
+                   "_Merge_ merges all resulting polygons of each region after shrinking. "
+                   "`Largest` keeps only the largest resulting polygon of each region after shrinking.",
+              type=click.Choice(["merge", "largest"], case_sensitive=False),
+              default="merge", show_default=True)
+def pageshrink_cli(xmls: list[Path], glob: str = "*.xml", image_suffix: Optional[str] = None, 
+                   output: Optional[Path] = None,  padding: int = 5, vertical: int = 1, horizontal: int = 1, 
+                   mode: SHRINK_MODE = "merge"):
+    """
+    Shrinks the region polygons of PageXML files to its content.
+    
+    XMLS: List of PageXML files or directories containing PageXML files. 
+    Accepts individual files, wildcards, or directories (with -g option for pattern matching).
+    """
+    xmls = expand_paths(xmls, glob)
+    if not xmls:
+        rprint("[bold red]ERROR:[/bold red] No valid PageXML files found.")
+        return
+    if output and not output.exists():
+        output.mkdir(parents=True, exist_ok=True)
+    
+    with progress as p:
+        task = p.add_task("Shrinking regions...", total=len(xmls), filename="")
+        for fp in xmls:
+            p.update(task, filename=fp)
+            image = find_image(fp, image_suffix)
+            shrinker = Pageshrink(fp, image)
+            try:
+                pxml = shrinker.shrink(padding, horizontal, vertical, mode, logger=p)
+                if output:
+                    pxml.to_xml(output.joinpath(fp.name))
+                else:
+                    pxml.to_xml(fp)
+            except Exception as e:
+                p.log(f"Could not shrink {fp}: {e}")
+    
 
 if __name__ == "__main__":
     pageshrink_cli()
