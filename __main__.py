@@ -27,7 +27,7 @@ __version__ = "2.0.0"
 __prog__ = "pageshrink"
 
 click.rich_click.SHOW_ARGUMENTS = True
-click.rich_click.MAX_WIDTH = 96
+click.rich_click.MAX_WIDTH = 90
 click.rich_click.RANGE_STRING = ""
 click.rich_click.OPTION_GROUPS = {
     "*": [
@@ -153,6 +153,12 @@ def find_image(pagexml: Path, image_suffix: Optional[str] = None) -> Optional[Pa
 def pageshrink_cli(pagexml: list[Path], glob: str = "*.xml", image_suffix: Optional[str] = None,
                    output: Optional[Path] = None, mode: SHRINK_MODE = "merge",
                    padding: int = 5, smoothing: float = 1.0, noise: int = 1):
+    """
+    Shrinks the region polygons of PageXML files to its content.
+    
+    PAGEXML: List of PageXML files or directories containing PageXML files. 
+    Accepts individual files, wildcards, or directories (with -g option for pattern matching).
+    """
     pagexml = expand_paths(pagexml, glob)
     if not pagexml:
         rprint("[bold red]ERROR:[/bold red] No valid PageXML files found.")
