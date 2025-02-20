@@ -1,4 +1,4 @@
-# nlbin
+# pageshrink
 
 Shrinks the region polygons of PageXML files to its content.
 
