@@ -108,7 +108,7 @@ def estimate_glyphs(image: np.ndarray, smallest: bool = False) -> int:
         The median glyph size, calculated from the biggest 50% of the glyphs (noise removal).
     """
     _, _, stats, _ = cv2.connectedComponentsWithStats(image, connectivity=8)
-    if len(stats) > 0:
+    if len(stats) > 1:
         glyph_widths = sorted(stats[1:, 2], reverse=True)
         glyph_heights = sorted(stats[1:, 3], reverse=True)
         avg_width = np.median(glyph_widths[:ceil(len(glyph_widths) * 0.5)])
