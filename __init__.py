@@ -1,1 +1,0 @@
-from pageshrink import shrink

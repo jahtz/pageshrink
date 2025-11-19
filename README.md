@@ -3,68 +3,64 @@
 Shrinks the region polygons of PageXML files to its content.
 
 ## Setup
->[!NOTE]
-> Tested Python versions: `3.13.1`
-
->[!IMPORTANT]
->The following setup process uses [PyEnv](https://github.com/pyenv/pyenv?tab=readme-ov-file#linuxunix)
+> [!NOTE]
+> Python: `>=3.13`
 
 1. Clone repository
 	```shell
 	git clone https://github.com/jahtz/pageshrink
 	```
 
-2. Create Virtual Environment
+2. Install dependencies
 	```shell
-	pyenv install 3.13.1
-	pyenv virtualenv 3.13.1 pageshrink
-	pyenv activate pageshrink
-	```
-
-3. Install dependencies
-	```shell
-	pip install -r pageshrink/requirements.txt
+	pip install ./pageshrink
 	```
 
 ## Usage
 ```
-> python pageshrink --help
-                                                                                          
- Usage: pageshrink [OPTIONS] PAGEXML...                                                   
-                                                                                          
- Shrinks the region polygons of PageXML files to its content.                             
- PAGEXML: List of PageXML files or directories containing PageXML files.  Accepts         
- individual files, wildcards, or directories (with -g option for pattern matching).       
-                                                                                          
-╭─ Input ────────────────────────────────────────────────────────────────────────────────╮
-│ *  PAGEXML       PATH  [required]                                                      │
-│    --glob    -g  TEXT  Glob pattern for matching PageXML files within directories.     │
-│                        Only applicable when directories are passed in PAGEXML.         │
-│                        [default: *.xml]                                                │
-│    --images  -i  TEXT  Suffix of the image files to search for. If not provided, the   │
-│                        imageFilename attribute from the PageXML is used.               │
-╰────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Options ──────────────────────────────────────────────────────────────────────────────╮
-│ --output     -o  DIRECTORY        Specify output directory for shrunk files. If not    │
-│                                   set, overwrite input files.                          │
-│ --padding    -p  INTEGER          Padding between region borders and its content in    │
-│                                   pixels.                                              │
-│                                   [default: 5]                                         │
-│ --smoothing  -s  FLOAT            Smoothing, calculated as the factor of the average   │
-│                                   glyph size. Prevents regions eating between text.    │
-│                                   [default: 1.0]                                       │
-│ --noise      -n  INTEGER RANGE    Noise reduction, by applying a kernel of this size   │
-│                                   to the image. Should be at least 3                   │
-│ --mode       -m  [merge|largest]  Shrinking mode to use for regions. `Merge` merges    │
-│                                   all resulting polygons of each region after          │
-│                                   shrinking. `Largest` keeps only the largest          │
-│                                   resulting polygon of each region after shrinking.    │
-│                                   [default: merge]                                     │
-╰────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Help ─────────────────────────────────────────────────────────────────────────────────╮
-│ --help         Show this message and exit.                                             │
-│ --version      Show the version and exit.                                              │
-╰────────────────────────────────────────────────────────────────────────────────────────╯
+$ pageshrink --help
+Usage: pageshrink [OPTIONS] FILES...
+
+  Shrinks the region polygons of PageXML files.
+
+  FILES: List of PageXML file paths to process.
+
+Options:
+  --help                          Show this message and exit.
+  --version                       Show the version and exit.
+  -i, --images SUFFIX             The full suffix of the binary image files to
+                                  search for. If not provided, the
+                                  imageFilename attribute is used. Example:
+                                  '.bin.png'
+  -o, --output DIRECTORY          Specify output directory for processed
+                                  files. If not set, overwrite input files.
+  -p, --padding INTEGER           Padding between region borders and its
+                                  content in pixels.  [default: 5]
+  -s, --smoothing FLOAT           Smoothing, calculated as the factor of the
+                                  average glyph size. Prevents regions cutting
+                                  between text.  [default: 1.0]
+  -m, --mode [merge|largest]      Shrinking mode to use for regions. 'merge'
+                                  merges all resulting polygons of each region
+                                  after shrinking. 'largest' keeps only the
+                                  largest resulting polygon of each region
+                                  after shrinking.  [default: merge]
+  -b, --bbox PageType             Draw a minimal bounding box for a specific
+                                  region after shrinking. Should be of format
+                                  'PageType' or 'PageType.subtype'. Multiple
+                                  regions can be specified. Examples:
+                                  'ImageRegion', 'TextRegion.paragraph'
+  -e, --exclude PageType          Exclude a specific region from shrinking.
+                                  Should be of format PageType or
+                                  PageType.subtype. Multiple excludes can be
+                                  specified. Examples: 'ImageRegion',
+                                  'TextRegion.paragraph'
+  --logging [ERROR|WARNING|INFO|DEBUG]
+                                  Set logging level.  [default: WARNING]
+```
+
+### Example
+```shell
+$ pageshrink ./samples/*.xml -i .sbb.bin.png -o ./samples_shrinked -b TableRegion -b ImageRegion
 ```
 
 ## ZPD
