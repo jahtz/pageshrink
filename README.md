@@ -4,7 +4,7 @@ Shrinks the region polygons of PageXML files to its content.
 
 ## Setup
 > [!NOTE]
-> Python: `>=3.13`
+> Python: `>=3.11`
 
 1. Clone repository
 	```shell
